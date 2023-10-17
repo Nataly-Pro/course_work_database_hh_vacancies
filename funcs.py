@@ -1,4 +1,5 @@
 import requests
+import csv
 from time import sleep
 
 
@@ -35,7 +36,7 @@ def get_employers_by_names(names: list[str]) -> list[dict]:
     return employers_list
 
 
-def get_vacancies(employers: list[dict]) -> list[dict]:
+def get_vacancies_by_employers_names(employers: list[dict]) -> list[dict]:
     """Запрашивает по API Headhunter информацию о вакансиях по
     ID работодателя,
     возвращает данные в виде списка словарей.
@@ -61,5 +62,58 @@ def get_vacancies(employers: list[dict]) -> list[dict]:
             except requests.exceptions.RequestException as er:
                 print("Exception request\n", er.args[0])
                 break
+
+    return vacancies_list
+
+
+def get_employers_from_file(filename) -> list[dict]:
+    """Запрашивает по API Headhunter информацию о работодателях
+    по переданным названиям,
+    возвращает данные в виде списка словарей.
+    """
+    url = "https://api.hh.ru/employers/"
+    employers_list = []
+
+    with open(filename, 'r', encoding='utf-8') as file:
+        employers = csv.DictReader(file)
+        for row in employers:
+            try:
+                response = requests.get(url+row['ID'])
+                data = response.json()
+                employers_list.append(data)
+            except requests.exceptions.RequestException as er:
+                print("Exception request")
+                print(er.args[0])
+                break
+            sleep(0.25)
+
+    return employers_list
+
+
+def get_vacancies_by_id_from_file(filename) -> list[dict]:
+    url = "https://api.hh.ru/vacancies"
+    vacancies_list = []
+
+    with open(filename, 'r', encoding='utf-8') as file:
+        employers = csv.DictReader(file)
+
+        for row in employers:
+            for page in range(1):
+                params = {
+                    'employer_id': row['ID'],
+                    'area': '113',
+                    'page': page,
+                    'per_page': 100,
+                }
+                try:
+                    response = requests.get(url, params)
+                    data = response.json()
+                    if not data['items']:
+                        break
+                    else:
+                        vacancies_list.extend(data['items'])
+                except requests.exceptions.RequestException as er:
+                    print("Exception request\n", er.args[0])
+                    break
 
     return vacancies_list

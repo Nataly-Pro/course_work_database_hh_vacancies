@@ -1,14 +1,23 @@
-from funcs import get_employers_by_names, get_vacancies
+from funcs import get_employers_by_names, get_vacancies_by_employers_names, \
+    get_employers_from_file, get_vacancies_by_id_from_file
 from DBManager import DBManager
 
 
 def main():
-    employer_names = input('Введите названия интересующих вас компаний '
-                           'через запятую для поиска '
-                           'их вакансий: ').strip().split(', ')
 
-    employers = get_employers_by_names(employer_names)
-    vacancies = get_vacancies(employers)
+    user_choice = input('Выберите вариант поиска вакансий:\n'
+                        '1 - по указанным Вами компаниям, \n'
+                        '2 - среди 10 лучших IT-компаний по рейтингу Хабр Карьеры:\n')
+    if user_choice == '1':
+        employer_names = input('Введите названия интересующих вас компаний '
+                               'через запятую: ').strip().split(', ')
+
+        employers = get_employers_by_names(employer_names)
+        vacancies = get_vacancies_by_employers_names(employers)
+
+    elif user_choice == '2':
+        employers = get_employers_from_file('employers.csv')
+        vacancies = get_vacancies_by_id_from_file('employers.csv')
 
     db_manager = DBManager('hh_vacancies')
     db_manager.create_database()
