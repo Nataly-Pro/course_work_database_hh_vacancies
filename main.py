@@ -16,23 +16,21 @@ def main():
                                'через запятую: ').strip().split(', ')
         try:
             employers = get_employers_by_names(employer_names)
+            vacancies = get_vacancies_by_employers_names(employers)
         except requests.exceptions.RequestException as er:
             print("Exception request\n", er.args[0])
             return
-        else:
-            vacancies = get_vacancies_by_employers_names(employers)
 
     elif user_choice == '2':
         try:
             employers = get_employers_from_file(filename)
+            vacancies = get_vacancies_by_id_from_file(filename)
         except FileNotFoundError:
             print(f"Файл {filename} не найден.")
             return
         except requests.exceptions.RequestException as er:
             print("Exception request\n", er.args[0])
             return
-        else:
-            vacancies = get_vacancies_by_id_from_file(filename)
 
     # работа с БД
     db_manager = DBManager('hh_vacancies')
