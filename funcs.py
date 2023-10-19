@@ -45,7 +45,7 @@ def get_vacancies_by_employers_names(employers: list[dict]) -> list[dict]:
     vacancies_list = []
 
     for employer in employers:
-        for page in range(10):
+        for page in range(5):
             params = {
                 'employer_id': employer['id'],
                 'area': '113',
@@ -62,58 +62,65 @@ def get_vacancies_by_employers_names(employers: list[dict]) -> list[dict]:
             except requests.exceptions.RequestException as er:
                 print("Exception request\n", er.args[0])
                 break
-
     return vacancies_list
 
 
 def get_employers_from_file(filename) -> list[dict]:
-    """Запрашивает по API Headhunter информацию о работодателях
-    по переданным названиям,
-    возвращает данные в виде списка словарей.
+    """Получает ID компании из csv-файла,
+    передает его в URL запроса по API hh.ru,
+    получает данные о компании-работодателе в виде словаря python.
+    Возвращает список словарей.
     """
     url = "https://api.hh.ru/employers/"
     employers_list = []
-
-    with open(filename, 'r', encoding='utf-8') as file:
-        employers = csv.DictReader(file)
-        for row in employers:
-            try:
-                response = requests.get(url+row['ID'])
-                data = response.json()
-                employers_list.append(data)
-            except requests.exceptions.RequestException as er:
-                print("Exception request")
-                print(er.args[0])
-                break
-            sleep(0.25)
-
+    try:
+        with open(filename, 'r', encoding='utf-8') as file:
+            employers = csv.DictReader(file)
+            for row in employers:
+                try:
+                    response = requests.get(url+row['ID'])
+                    data = response.json()
+                    employers_list.append(data)
+                except requests.exceptions.RequestException as er:
+                    print("Exception request")
+                    print(er.args[0])
+                    break
+                sleep(0.25)
+    except FileNotFoundError:
+        print(f'Файл {filename} не найден.')
     return employers_list
 
 
 def get_vacancies_by_id_from_file(filename) -> list[dict]:
+    """Получает ID компании из csv-файла,
+    передает его в параметры запроса по API hh.ru,
+    получает данные о вакансиях работодателя в виде словаря.
+    Возвращает список словарей.
+    """
+
     url = "https://api.hh.ru/vacancies"
     vacancies_list = []
-
-    with open(filename, 'r', encoding='utf-8') as file:
-        employers = csv.DictReader(file)
-
-        for row in employers:
-            for page in range(1):
-                params = {
-                    'employer_id': row['ID'],
-                    'area': '113',
-                    'page': page,
-                    'per_page': 100,
-                }
-                try:
-                    response = requests.get(url, params)
-                    data = response.json()
-                    if not data['items']:
+    try:
+        with open(filename, 'r', encoding='utf-8') as file:
+            employers = csv.DictReader(file)
+            for row in employers:
+                for page in range(5):
+                    params = {
+                        'employer_id': row['ID'],
+                        'area': '113',
+                        'page': page,
+                        'per_page': 100,
+                    }
+                    try:
+                        response = requests.get(url, params)
+                        data = response.json()
+                        if not data['items']:
+                            break
+                        else:
+                            vacancies_list.extend(data['items'])
+                    except requests.exceptions.RequestException as er:
+                        print("Exception request\n", er.args[0])
                         break
-                    else:
-                        vacancies_list.extend(data['items'])
-                except requests.exceptions.RequestException as er:
-                    print("Exception request\n", er.args[0])
-                    break
-
+    except FileNotFoundError:
+        print(f'Файл {filename} не найден.')
     return vacancies_list
