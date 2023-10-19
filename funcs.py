@@ -18,21 +18,16 @@ def get_employers_by_names(names: list[str]) -> list[dict]:
             'area': '113',
             'only_with_vacancies': True,
         }
-        try:
-            response = requests.get(url, params)
-        except requests.exceptions.RequestException as er:
-            print("Exception request")
-            print(er.args[0])
-            break
-        else:
-            data = response.json()
-            for employer in data['items']:
-                if employer['id'] not in id_list:
-                    id_list.append(employer)
-                    employers_list.append(employer)
-                else:
-                    continue
-            sleep(0.25)
+        response = requests.get(url, params)
+        data = response.json()
+        for employer in data['items']:
+            if employer['id'] not in id_list:
+                id_list.append(employer)
+                employers_list.append(employer)
+            else:
+                continue
+        sleep(0.25)
+
     return employers_list
 
 
@@ -52,16 +47,12 @@ def get_vacancies_by_employers_names(employers: list[dict]) -> list[dict]:
                 'page': page,
                 'per_page': 100,
             }
-            try:
-                response = requests.get(url, params)
-                data = response.json()
-                if not data['items']:
-                    break
-                else:
-                    vacancies_list.extend(data['items'])
-            except requests.exceptions.RequestException as er:
-                print("Exception request\n", er.args[0])
+            response = requests.get(url, params)
+            data = response.json()
+            if not data['items']:
                 break
+            else:
+                vacancies_list.extend(data['items'])
     return vacancies_list
 
 
@@ -73,21 +64,14 @@ def get_employers_from_file(filename) -> list[dict]:
     """
     url = "https://api.hh.ru/employers/"
     employers_list = []
-    try:
-        with open(filename, 'r', encoding='utf-8') as file:
-            employers = csv.DictReader(file)
-            for row in employers:
-                try:
-                    response = requests.get(url+row['ID'])
-                    data = response.json()
-                    employers_list.append(data)
-                except requests.exceptions.RequestException as er:
-                    print("Exception request")
-                    print(er.args[0])
-                    break
-                sleep(0.25)
-    except FileNotFoundError:
-        print(f'Файл {filename} не найден.')
+
+    with open(filename, 'r', encoding='utf-8') as file:
+        employers = csv.DictReader(file)
+        for row in employers:
+            response = requests.get(url+row['ID'])
+            data = response.json()
+            employers_list.append(data)
+            sleep(0.25)
     return employers_list
 
 
@@ -100,27 +84,21 @@ def get_vacancies_by_id_from_file(filename) -> list[dict]:
 
     url = "https://api.hh.ru/vacancies"
     vacancies_list = []
-    try:
-        with open(filename, 'r', encoding='utf-8') as file:
-            employers = csv.DictReader(file)
-            for row in employers:
-                for page in range(5):
-                    params = {
-                        'employer_id': row['ID'],
-                        'area': '113',
-                        'page': page,
-                        'per_page': 100,
-                    }
-                    try:
-                        response = requests.get(url, params)
-                        data = response.json()
-                        if not data['items']:
-                            break
-                        else:
-                            vacancies_list.extend(data['items'])
-                    except requests.exceptions.RequestException as er:
-                        print("Exception request\n", er.args[0])
-                        break
-    except FileNotFoundError:
-        print(f'Файл {filename} не найден.')
+
+    with open(filename, 'r', encoding='utf-8') as file:
+        employers = csv.DictReader(file)
+        for row in employers:
+            for page in range(5):
+                params = {
+                    'employer_id': row['ID'],
+                    'area': '113',
+                    'page': page,
+                    'per_page': 100,
+                }
+                response = requests.get(url, params)
+                data = response.json()
+                if not data['items']:
+                    break
+                else:
+                    vacancies_list.extend(data['items'])
     return vacancies_list

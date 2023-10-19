@@ -1,24 +1,40 @@
+import requests
 from funcs import get_employers_by_names, get_vacancies_by_employers_names, \
     get_employers_from_file, get_vacancies_by_id_from_file
 from DBManager import DBManager
 
 
 def main():
+    filename = 'employers.csv'
 
     user_choice = input('Выберите вариант поиска вакансий:\n'
                         '1 - по указанным Вами компаниям, \n'
                         '2 - среди 11 лучших IT-компаний по рейтингу Хабр Карьеры:\n')
+
     if user_choice == '1':
         employer_names = input('Введите названия интересующих вас компаний '
                                'через запятую: ').strip().split(', ')
-
-        employers = get_employers_by_names(employer_names)
-        vacancies = get_vacancies_by_employers_names(employers)
+        try:
+            employers = get_employers_by_names(employer_names)
+        except requests.exceptions.RequestException as er:
+            print("Exception request\n", er.args[0])
+            return
+        else:
+            vacancies = get_vacancies_by_employers_names(employers)
 
     elif user_choice == '2':
-        employers = get_employers_from_file('employers.csv')
-        vacancies = get_vacancies_by_id_from_file('employers.csv')
+        try:
+            employers = get_employers_from_file(filename)
+        except FileNotFoundError:
+            print(f"Файл {filename} не найден.")
+            return
+        except requests.exceptions.RequestException as er:
+            print("Exception request\n", er.args[0])
+            return
+        else:
+            vacancies = get_vacancies_by_id_from_file(filename)
 
+    # работа с БД
     db_manager = DBManager('hh_vacancies')
     db_manager.create_database()
     print(f"БД hh_vacancies успешно создана")
@@ -35,6 +51,7 @@ def main():
     db_manager.add_vacancies_to_db(vacancies)
     print("Таблица vacancies успешно заполнена")
 
+    # интерактив с пользователем
     while True:
         print()
         user_choice = input('Выберите дальнейшее действие:\n'
