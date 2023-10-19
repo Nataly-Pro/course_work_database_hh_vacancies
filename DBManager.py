@@ -9,6 +9,7 @@ class DBManager:
         self.params = config()
 
     def create_database(self):
+        """Создаёт базу данных"""
         conn = psycopg2.connect(database='postgres', **self.params)
         conn.autocommit = True
         cur = conn.cursor()
@@ -170,7 +171,6 @@ class DBManager:
         with psycopg2.connect(database=self.db_name, **self.params) as conn:
             with conn.cursor() as cur:
                 cur.execute(query)
-                print(f'Найдено {len(cur.fetchall())} вакансий')
                 for row in cur.fetchall():
                     print(*row)
         conn.close()
